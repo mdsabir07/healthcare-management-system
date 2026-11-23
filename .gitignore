@@ -3,3 +3,7 @@ node_modules
 .env.*
 !.env.example
 dist
+.txt
+.DS_Store
+/src/generated
+

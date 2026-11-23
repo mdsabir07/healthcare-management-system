@@ -1,2 +1,174 @@
 1. Initialize the project: git Init
     Now create .gitignore file in root directory
+    add ignore files: node_modules: .env .env.* !.env.example dist ...etc
+2. create development branch: git checkout -b development
+    git add .
+    git commit -m "init"
+3. create another branch: git checkout -b part-1
+
+4. create package.json file: pnpm init
+5. create tsconfig.ts file: npm install --save-dev typescript 
+    Than: npx tsc --init
+
+6. install express: pnpm add express
+7. pnpm add -D typescript @types/node @types/express
+8. configure the tsconfig.json file with below code:
+    {
+    // Visit https://aka.ms/tsconfig to read more about this file
+    "compilerOptions": {
+        // File Layout
+        "rootDir": "./src",
+        "outDir": "./dist",
+        // Environment Settings
+        "module": "nodenext",
+        // Recommended Options
+        "strict": true,
+        "esModuleInterop": true,
+        "skipLibCheck": true,
+        "forceConsistentCasingInFileNames": true
+    }
+    }
+
+9. setup server.ts file:
+import express, { Application, Request, Response } from "express";
+
+const app: Application = express();
+const port = 5000;
+
+// Enable URL-encoded from data parsing
+app.use(express.urlencoded({extended: true}));
+
+// middleware to pass json bodies
+app.use(express.json());
+
+// basic route
+app.get("/", (req: Request, res: Response) => {
+    res.send("Hello TypeScript with Express!");
+});
+
+app.listen(port, ()=> {
+    console.log(`Server is running on http://localhost:${port}...`);
+})
+
+10. install tsx: pnpm add -D tsx
+
+11. configure package.json with below:
+"scripts": {
+    "start": "node dist/server.js",
+    "build": "tsc",
+    "dev": "tsx watch src/server.ts",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },    
+
+12. setup server.ts and app.ts 
+13. create .env and .env.example. also install dotenv (pnpm add dotenv)
+
+14. create app folder inside src and add other folder inside app (module, lib, etc)
+
+15. now configure eslint: typescript-eslint.io and get started.
+    install: pnpm add --save-dev eslint @eslint/js typescript typescript-eslint
+    Next, create an eslint.config.mjs config file in the root of your project, and populate it with the following:
+    // @ts-check
+    import js from '@eslint/js';
+    import { defineConfig } from 'eslint/config';
+    import tseslint from 'typescript-eslint';
+
+    export default defineConfig({
+    files: ['**/*.{js,ts}'],
+    extends: [js.configs.recommended, tseslint.configs.recommended],
+    });
+
+    now 'pnpm eslint .' and add this command to package.json = "lint": "eslint ./src/**/*",
+
+16. setup prisma: prisma.io/get started/quickstart
+    install dependency: pnpm add prisma @types/node @types/pg
+    than: pnpm add @prisma/client @prisma/adapter-pg pg dotenv
+
+    modify the tsconfig.json file:
+    {
+        "compilerOptions": {
+            "rootDir": "./src",
+            "outDir": "./dist",
+            "module": "ESNext",
+            "moduleResolution": "bundler",
+            "target": "ES2023",
+            "strict": true,
+            "esModuleInterop": true,
+            "skipLibCheck": true,
+            "forceConsistentCasingInFileNames": true,
+            "ignoreDeprecations": "6.0"
+        }
+    }
+
+    package.json: 
+    {
+    "type": "module"
+    }
+
+    now Initialize prisma: pnpm dlx prisma
+    Next: pnpm dlx prisma init --db --output ../generated/prisma
+    provide authentication and enter, than add database name during this command running
+    it will create database on prisma
+
+    now add this code on tsconfig.json
+    "include": [
+    "src"
+    ],
+    "exclude": [
+        "node_modules",
+        "dist"
+    ]
+
+17. Create model on schema.prisma:
+    model Specialty {
+    id          String  @id @default(uuid(7))
+    title       String  @unique @db.VarChar(100)
+    description String? @db.Text
+    icon        String? @db.VarChar(255)
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    isDeleted Boolean   @default(false)
+    deletedAt DateTime?
+
+    @@index([isDeleted], name: "idx_specialty_isDeleted")
+    @@index([title], name: "idx_specialty_title")
+    @@map("specialties")
+    }
+
+    than migration: pnpm dlx prisma migrate dev --name init
+
+## reset migration: pnpm dlx prisma migrate reset
+
+18. prisma generate: pnpm dlx prisma generate
+
+### Better auth = https://better-auth.com/
+19. install: pnpm add better-auth
+    add to .env file:
+    BETTER_AUTH_SECRET="............"
+    BETTER_AUTH_URL=http://localhost:4000 # Base URL of your app
+    create lib/auth.ts and paste the code below:
+import { betterAuth } from "better-auth";
+import { prismaAdapter } from "better-auth/adapters/prisma";
+import { prisma } from "./prisma";
+
+export const auth = betterAuth({
+    database: prismaAdapter(prisma, {
+        provider: "postgresql", // or "mysql", "postgresql", ...etc
+    }),
+});
+
+    https://better-auth.com/docs/concepts/cli
+    generate better auth codes in prisma schema file and config file path = 
+    pnpm dlx auth@latest generate --output ./prisma/schema/auth.prisma --config ./src/app/lib/auth.ts
+    than: pnpm migrate dev
+    and : pnpm generate
+
+    now create role enum:
+enum Role {
+    SUPER_ADMIN
+    ADMIN
+    DOCTOR
+    PATIENT
+}
